@@ -1,0 +1,15 @@
+{
+  "n_features_monitored": 19,
+  "n_scenarios_total": 90,
+  "n_clean_scenarios": 45,
+  "n_drifted_scenarios": 45,
+  "detection_rate_overall": 0.9111,
+  "false_positive_rate": 0.0889,
+  "detection_rate_by_severity": {
+    "mild": 0.7333,
+    "moderate": 1.0,
+    "severe": 1.0
+  },
+  "psi_threshold": 0.2,
+  "ks_pvalue_threshold": 0.01
+}

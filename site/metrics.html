@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Metrics — CredFlux</title>
+  <meta name="description" content="Every CredFlux number traces to a script: drift detection rates, promotion decisions, fairness gate results.">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..560&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html">
+      <img src="logo.svg" alt="CredFlux logo" width="30" height="30">
+      <span class="wordmark">Cred<span class="flux">Flux</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Product</a>
+      <a href="metrics.html" class="active">Metrics</a>
+      <a href="architecture.html">Architecture</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" style="padding-bottom: 40px;">
+  <div class="container">
+    <div class="hero-badge">Metrics</div>
+    <h1 style="font-size: clamp(2rem, 4.5vw, 3rem);">Every number traces to a script.</h1>
+    <p class="lede">
+      Nothing here is aspirational. Each figure is produced by a runnable script in the repo and
+      written to a results file. Thresholds we chose are labeled <b>design</b>; everything else
+      was <b>measured</b>.
+    </p>
+  </div>
+</header>
+
+<section class="section soft">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Headline results</div>
+      <h2>The numbers the pipeline earned.</h2>
+    </div>
+    <div class="grid-4">
+      <div class="stat-card"><div class="value">91.1<span>%</span></div><div class="label">Drift detection rate — 45 drifted batches</div></div>
+      <div class="stat-card"><div class="value">8.9<span>%</span></div><div class="label">False-positive rate — 45 clean batches</div></div>
+      <div class="stat-card"><div class="value">90</div><div class="label">Simulated drift scenarios</div></div>
+      <div class="stat-card"><div class="value">19</div><div class="label">Features scored per batch</div></div>
+      <div class="stat-card"><div class="value">2.1<span>ms</span></div><div class="label">Median /predict latency (50 requests)</div></div>
+      <div class="stat-card"><div class="value">59</div><div class="label">MLflow tracked runs</div></div>
+      <div class="stat-card"><div class="value">23</div><div class="label">Audit-logged decisions</div></div>
+      <div class="stat-card"><div class="value">18<span>/18</span></div><div class="label">Weak challengers correctly rejected</div></div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">Chosen vs. measured</div>
+      <h2>A threshold is a decision. A rate is a result.</h2>
+      <p>The discipline that keeps the numbers honest — the two are never mixed.</p>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr><th>Quantity</th><th>Value</th><th>Kind</th><th>Source script</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>PSI drift cutoff, per feature</td><td class="mono">&gt; 0.20</td><td><span class="pill design">design</span></td><td class="mono">monitor/drift.py</td></tr>
+          <tr><td>KS-test alpha (multiple-testing guarded)</td><td class="mono">p &lt; 0.01</td><td><span class="pill design">design</span></td><td class="mono">monitor/drift.py</td></tr>
+          <tr><td>Features that must agree per batch</td><td class="mono">≥ 3 of 19</td><td><span class="pill design">design</span></td><td class="mono">monitor/drift.py</td></tr>
+          <tr><td>Drift detection rate</td><td class="mono">91.1%</td><td><span class="pill measured">measured</span></td><td class="mono">monitor/inject_and_evaluate.py</td></tr>
+          <tr><td>False-positive rate</td><td class="mono">8.9%</td><td><span class="pill measured">measured</span></td><td class="mono">monitor/inject_and_evaluate.py</td></tr>
+          <tr><td>Detection by severity (mild / moderate / severe)</td><td class="mono">73% / 100% / 100%</td><td><span class="pill measured">measured</span></td><td class="mono">monitor/inject_and_evaluate.py</td></tr>
+          <tr><td>AUC margin required to promote</td><td class="mono">≥ +1.0 pp</td><td><span class="pill design">design</span></td><td class="mono">promote/promote_loop.py</td></tr>
+          <tr><td>Simulated drift events run end to end</td><td class="mono">20 (18 triggered retrains)</td><td><span class="pill measured">measured</span></td><td class="mono">promote/promote_loop.py</td></tr>
+          <tr><td>Detection-to-decision loop time (avg)</td><td class="mono">~2.0 s</td><td><span class="pill measured">measured</span></td><td class="mono">promote/promote_loop.py</td></tr>
+          <tr><td>Subgroup FPR disparity allowed</td><td class="mono">≤ 5.0 pp</td><td><span class="pill design">design</span></td><td class="mono">fairness/fairness.py</td></tr>
+          <tr><td>Disparity of the blocked challenger</td><td class="mono">22.4 pp (at +7.65% AUC)</td><td><span class="pill measured">measured</span></td><td class="mono">fairness/blocked_demo.py</td></tr>
+          <tr><td>Disparity after per-group calibration</td><td class="mono">4.4 pp → promoted</td><td><span class="pill measured">measured</span></td><td class="mono">promote/promotion_mechanism_demo.py</td></tr>
+          <tr><td>Champion holdout AUC (logistic regression)</td><td class="mono">0.809</td><td><span class="pill measured">measured</span></td><td class="mono">train/train.py</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<section class="section soft">
+  <div class="container">
+    <div class="section-head">
+      <div class="kicker">The strongest result</div>
+      <h2>The gate that said no.</h2>
+    </div>
+    <div class="quote">
+      <p>A challenger with <span class="accent">+7.65% AUC</span> over its champion was blocked
+      because its false-positive rate for the 40–59 age band was 22.4 points higher than for
+      under-25s. After per-group threshold calibration brought the disparity down to 4.4 points,
+      the same challenger passed both gates and was promoted. The gate catches real bias — and it
+      isn't a dead code path.</p>
+      <div class="who">fairness/blocked_demo.py · promote/promotion_mechanism_demo.py</div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-inner">
+    <span class="footer-brand">
+      <img src="logo.svg" alt="" width="20" height="20">
+      CredFlux — Train · Serve · Monitor · Promote safely · Gate for fairness.
+    </span>
+    <span>Local-first by design.</span>
+  </div>
+</footer>
+
+</body>
+</html>

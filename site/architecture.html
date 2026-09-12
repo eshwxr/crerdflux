@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Architecture — CredFlux</title>
+  <meta name="description" content="The CredFlux pipeline: serve, monitor, challenge, decide — four lanes, two gates, one audit trail.">
+  <link rel="icon" href="logo.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400..600;1,9..144,400..560&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<nav class="nav">
+  <div class="container nav-inner">
+    <a class="brand" href="index.html">
+      <img src="logo.svg" alt="CredFlux logo" width="30" height="30">
+      <span class="wordmark">Cred<span class="flux">Flux</span></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Product</a>
+      <a href="metrics.html">Metrics</a>
+      <a href="architecture.html" class="active">Architecture</a>
+    </div>
+  </div>
+</nav>
+
+<header class="hero" style="padding-bottom: 40px;">
+  <div class="container">
+    <div class="hero-badge">Architecture</div>
+    <h1 style="font-size: clamp(2rem, 4.5vw, 3rem);">Four lanes, two gates, one audit trail.</h1>
+    <p class="lede">
+      Traffic is served by exactly one champion at a time. Everything else — monitoring,
+      retraining, shadow scoring, gating — exists to decide, with evidence, when that
+      champion should change.
+    </p>
+  </div>
+</header>
+
+<section class="section soft" style="padding-top: 48px;">
+  <div class="container">
+
+    <div class="lane">
+      <div class="lane-title">
+        <div class="step">1</div>
+        <h3>Serve</h3>
+        <div class="hint">the only lane that touches users</div>
+      </div>
+      <div class="flow">
+        <div class="node">
+          <div class="kind">Input</div>
+          <div class="name">Live requests</div>
+          <div class="desc">Loan applications scored one at a time.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="node">
+          <div class="kind">API</div>
+          <div class="name">FastAPI <code>/predict</code></div>
+          <div class="desc">API-key auth · returns risk score + probability · 2.1 ms median latency.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="node">
+          <div class="kind">Model</div>
+          <div class="name">Champion</div>
+          <div class="desc">The one model in Production stage. Nothing serves traffic but this.</div>
+        </div>
+        <div class="flow-arrow">⇄</div>
+        <div class="node">
+          <div class="kind">Registry</div>
+          <div class="name">MLflow</div>
+          <div class="desc">59 tracked runs, versioned artifacts, one Production stage at a time.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">
+        <div class="step">2</div>
+        <h3>Monitor</h3>
+        <div class="hint">runs on every incoming batch</div>
+      </div>
+      <div class="flow">
+        <div class="node">
+          <div class="kind">Input</div>
+          <div class="name">Incoming batches</div>
+          <div class="desc">Recent traffic, sampled from the live stream.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="node">
+          <div class="kind">Detector</div>
+          <div class="name">PSI + KS per feature</div>
+          <div class="desc">Laplace-smoothed PSI &gt; 0.2, KS p &lt; 0.01 — each feature compared
+          against frozen training-set bins.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="node gate">
+          <div class="kind">Vote</div>
+          <div class="name">≥ 3 of 19 features flagged?</div>
+          <div class="desc">One noisy feature is expected. Three agreeing is drift.</div>
+        </div>
+      </div>
+      <p class="lane-note"><b>Clean</b> → no action, result still audit-logged. &nbsp;·&nbsp;
+      <b>Drifted</b> → lane 3 fires.</p>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">
+        <div class="step">3</div>
+        <h3>Challenge</h3>
+        <div class="hint">triggered by drift, never by a schedule</div>
+      </div>
+      <div class="flow">
+        <div class="node">
+          <div class="kind">Trigger</div>
+          <div class="name">Retrain challenger</div>
+          <div class="desc">Fresh labeled data folded into the training set; logged as a new MLflow run.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="node">
+          <div class="kind">Shadow</div>
+          <div class="name">Shadow scoring</div>
+          <div class="desc">The challenger scores the same traffic as the champion — logged, never served.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="node gate">
+          <div class="kind">Gate 1 · Performance</div>
+          <div class="name">ΔAUC ≥ +1.0 pp</div>
+          <div class="desc">Must beat the champion by a full point of AUC on recent labeled data.</div>
+        </div>
+        <div class="flow-arrow">→</div>
+        <div class="node gate">
+          <div class="kind">Gate 2 · Fairness</div>
+          <div class="name">FPR disparity ≤ 5 pp</div>
+          <div class="desc">False-positive rates compared across age bands. Bias blocks promotion.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="lane">
+      <div class="lane-title">
+        <div class="step">4</div>
+        <h3>Decide &amp; record</h3>
+        <div class="hint">three outcomes, all logged</div>
+      </div>
+      <div class="outcome-grid">
+        <div class="outcome">
+          <span class="chip good">✓ Promoted</span>
+          <p>Passed both gates. Registered as a <b>new champion version</b> in MLflow and serving
+          cuts over to it.</p>
+        </div>
+        <div class="outcome">
+          <span class="chip warn">− Rejected</span>
+          <p>Insufficient AUC gain. In simulation, <b>18 of 18</b> weak challengers were correctly
+          turned away.</p>
+        </div>
+        <div class="outcome">
+          <span class="chip bad">✕ Blocked</span>
+          <p>Better AUC, worse bias. One challenger at <b>+7.65% AUC</b> was blocked for a
+          <b>22.4 pp</b> subgroup disparity.</p>
+        </div>
+      </div>
+      <div class="audit-note">
+        <div class="dot">●</div>
+        <p><b>Audit trail.</b> Every decision — drift cause, champion-vs-challenger metrics,
+        fairness result, timestamp, final outcome — is appended to a structured JSONL log.
+        23 entries and counting. If a regulator asks why a model was promoted, the answer is
+        one line of JSON away.</p>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin-top: 48px; margin-bottom: 20px;">
+      <div class="kicker">Stack</div>
+      <h2 style="font-size: 1.5rem;">What it runs on</h2>
+    </div>
+    <div class="stack-pills">
+      <span>Python</span><span>scikit-learn</span><span>XGBoost</span><span>MLflow</span>
+      <span>FastAPI</span><span>Streamlit</span><span>German Credit (OpenML)</span>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  <div class="container footer-inner">
+    <span class="footer-brand">
+      <img src="logo.svg" alt="" width="20" height="20">
+      CredFlux — Train · Serve · Monitor · Promote safely · Gate for fairness.
+    </span>
+    <span>Local-first by design.</span>
+  </div>
+</footer>
+
+</body>
+</html>

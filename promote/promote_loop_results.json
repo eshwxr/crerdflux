@@ -1,0 +1,12 @@
+{
+  "n_events_simulated": 20,
+  "n_drift_detected_retrain_triggered": 18,
+  "auc_promotion_margin": 0.01,
+  "decision_counts": {
+    "rejected_insufficient_auc_gain": 18,
+    "no_action": 2
+  },
+  "avg_detection_to_decision_loop_time_sec": 1.9607,
+  "final_champion_version": 1,
+  "final_champion_auc": 0.8088
+}
